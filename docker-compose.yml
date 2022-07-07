@@ -1,0 +1,45 @@
+version: '3.1'
+services:
+  vembu-postgres:    # The Postgres Database Service
+    image: vembubdr/bdr-latest:psql-latest-new
+    restart: always
+    container_name: vembu-db
+    hostname: VembuDatabase
+    environment:   # Username, password and database name variables
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: SGDatabase
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      vembu-network:
+        ipv4_address: 172.21.0.2
+
+  vembu-server:  
+    image: vembubdr/bdr-latest:vembubdr-5200
+    container_name: vembu-server
+    hostname: vembu-server
+    restart: always
+    extra_hosts:
+      - "VembuDatabase:172.21.0.2"
+    depends_on:
+      - vembu-postgres
+    networks:
+      vembu-network:
+        ipv4_address: 172.21.0.3
+    ports:
+       - 6060:6060
+       - 32004:32004
+    devices:
+      - "/dev/fuse:/dev/fuse"
+    volumes:
+      - ./vembu:/vembu
+    privileged: true
+    tty: true
+
+networks:
+  vembu-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
